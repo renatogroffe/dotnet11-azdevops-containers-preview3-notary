@@ -1,0 +1,51 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  NOTATION_VERSION: '1.3.2'
+  ORAS_VERSION: '1.3.0'
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+- script: |
+    echo Add other tasks to build, test, and deploy your project.
+    echo See https://aka.ms/yaml
+    echo $(NOTATION_VERSION)
+  displayName: 'Run a multi-line script'
+- script: |
+    curl -LO https://github.com/notaryproject/notation/releases/download/v$(NOTATION_VERSION)/notation_$(NOTATION_VERSION)\_linux_amd64.tar.gz
+    curl -LO https://github.com/notaryproject/notation/releases/download/v$(NOTATION_VERSION)/notation_$(NOTATION_VERSION)\_checksums.txt
+    shasum --check notation_$(NOTATION_VERSION)\_checksums.txt
+    echo ''
+    echo '***** Arquivos apos download do Notation *****'
+    ls -l
+    echo ''
+    echo ''
+    sudo tar xvzf notation_$(NOTATION_VERSION)\_linux_amd64.tar.gz -C /usr/local/bin/ notation
+  displayName: 'Instalar Notation CLI'
+- script: |
+    notation
+  displayName: 'Testar a instalação do Notation'
+- script: |
+    curl -LO "https://github.com/oras-project/oras/releases/download/v$(ORAS_VERSION)/oras_$(ORAS_VERSION)_linux_amd64.tar.gz"
+    mkdir -p oras-install/
+    tar -zxf oras_$(ORAS_VERSION)_*.tar.gz -C oras-install/
+    sudo mv oras-install/oras /usr/local/bin/
+    rm -rf oras_$(ORAS_VERSION)_*.tar.gz oras-install/
+  displayName: 'Instalar o ORAS'
+- script: |
+    oras
+  displayName: 'Testar a instalação do ORAS'
+- script: |
+    docker pull mcr.microsoft.com/dotnet/sdk:11.0.100-preview.3
+  displayName: 'Baixar imagem .NET 11 SDK Preview 3'
+- script: |
+    notation inspect mcr.microsoft.com/dotnet/sdk:11.0.100-preview.3
+  displayName: 'Executar o Notation na image .NET 11 SDK Preview 3'
+- script: |
+    oras discover mcr.microsoft.com/dotnet/sdk:11.0.100-preview.3
+  displayName: 'Executar o ORAS na image .NET 11 SDK Preview 3'
